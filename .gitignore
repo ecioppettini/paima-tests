@@ -5,3 +5,4 @@ lib
 **/*logs.log
 paima-engine-linux
 **/*packaged
+**/*__pycache__

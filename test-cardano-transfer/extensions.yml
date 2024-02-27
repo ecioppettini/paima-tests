@@ -1,0 +1,8 @@
+extensions:
+  - name: "CARDANO-ASSET1"
+    type: cardano-transfer
+    credential: addr_test1qp27ms6du9e2fga6njk9ruzprp7gg3uddrnc3htv7mct8kwrwdlnpt07ycmdqyuw7lft338dt33tmr6xdwnn8ezsudpquved20
+    startSlot: 12472120
+    stopSlot: 12500000
+    scheduledPrefix: ct
+    network: Cardano
