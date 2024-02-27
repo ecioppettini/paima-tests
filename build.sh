@@ -1,18 +1,17 @@
 #!/usr/bin/bash
 
-# pushd ~/Projects/paima-engine
+pushd ~/Projects/paima-engine
+npm run build
 
-# npm run build 
+pushd packages/engine/paima-standalone/
 
-# pushd packages/engine/paima-standalone/ 
+npm run build
+npm run pack
 
-# npm run build 
-# npm run pack 
+bash package.sh
 
-# bash package.sh 
-
-# popd
-# popd
+popd
+popd
 
 cp ~/Projects/paima-engine/packages/engine/paima-standalone/packaged/@standalone/paima-engine-linux .
 
