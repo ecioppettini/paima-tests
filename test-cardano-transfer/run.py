@@ -6,8 +6,16 @@ import time
 import tempfile
 import shutil
 import threading
+import sys
 from pathlib import Path
-from run_server import main as run_server
+
+# TODO: rename file
+from carp_data import output as output
+
+directory = Path(__file__).resolve()
+sys.path.append(str(directory.parent.parent))
+from setup import *
+from carp_mock import carp_mock
 
 script_path = Path(__file__).resolve()
 root_path = script_path.parent.parent
@@ -15,224 +23,30 @@ root_path = script_path.parent.parent
 # Set initial timestamp
 BASE_TIMESTAMP = 1679128974
 
-USER = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
-TARGET = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
 
-ANVIL = None
+def timestampForEvent(index):
+    ts = output[index]["block"]["slot"] + 1666656000 + 200
 
-
-def startAnvil():
-    anvil = subprocess.Popen(
-        ["anvil", "--port", "8545", "--chain-id", "31337", "--timestamp", timestamp(1)],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.STDOUT,
-        text=True,
-    )
-
-    time.sleep(2)
-
-    if anvil.poll() is not None:
-        raise RuntimeError("Couldn't start anvil")
-    else:
-        print("Network deployed")
-
-    return anvil
+    return ts
 
 
 def timestamp(offset):
     return str(BASE_TIMESTAMP + offset)
 
 
-def setNextTimestamp(ts):
-    status = subprocess.run(
-        [
-            "cast",
-            "rpc",
-            "evm_setNextBlockTimestamp",
-            ts,
-            "--rpc-url",
-            "http://localhost:8545",
-        ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.STDOUT,
-    )
-
-    if status.returncode != 0:
-        raise RuntimeError("failed to set next block timestamp")
-
-
-def mineBlockWithErcTransfer(ts, token):
-    setNextTimestamp(ts)
-
-    status = subprocess.run(
-        [
-            "cast",
-            "send",
-            token,
-            "--unlocked",
-            "--from",
-            USER,
-            "transfer(address,uint256)",
-            TARGET,
-            "1",
-            "--rpc-url",
-            "http://localhost:8545",
-        ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.STDOUT,
-    )
-
-    if status.returncode != 0:
-        raise RuntimeError("failed to make erc20 transfer")
-
-
-def impersonateAccount(user):
-    subprocess.run(
-        [
-            "cast",
-            "rpc",
-            "anvil_impersonateAccount",
-            user,
-            "--rpc-url",
-            "http://localhost:8545",
-        ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.STDOUT,
-    )
-
-
-def mineEmptyBlock(ts):
-    setNextTimestamp(ts)
-
-    subprocess.run(
-        ["cast", "rpc", "evm_mine", "--rpc-url", "http://localhost:8545"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.STDOUT,
-    )
-
-
-def deployPaimaContract():
-    print("Deploying Paima L2 Contract")
-
-    subprocess.run(
-        [
-            "forge",
-            "install",
-            "openzeppelin/openzeppelin-contracts@v4.9.5",
-            "--no-commit",
-        ],
-        cwd=root_path,
-    )
-
-    result = subprocess.run(
-        [
-            "forge",
-            "create",
-            "--rpc-url",
-            "http://localhost:8545",
-            "--private-key",
-            "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
-            "PaimaL2Contract.sol:PaimaL2Contract",
-            "--constructor-args",
-            "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-            "0",
-            "--root",
-            ".",
-            "--contracts",
-            ".",
-            "--lib-paths",
-            "../../lib",
-            "--remappings",
-            "@openzeppelin/contracts/=../../lib/openzeppelin-contracts/contracts",
-        ],
-        stdout=subprocess.PIPE,
-        cwd=root_path / "contracts" / "evm-contracts",
-        universal_newlines=True,
-    )
-
-    address = ""
-    for line in result.stdout.split("\n"):
-        if "Deployed to" in line:
-            address = line.split(":")[1].strip().split(" ")[0]
-            break
-
-    return address
-
-
-def deployMyErc20():
-    result = subprocess.run(
-        [
-            "forge",
-            "create",
-            "--root",
-            ".",
-            "--rpc-url",
-            "http://localhost:8545",
-            "--private-key",
-            "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
-            "src/CustomErc20.sol:CustomERC20",
-        ],
-        stdout=subprocess.PIPE,
-        universal_newlines=True,
-        cwd=root_path / "my-erc20",
-    )
-
-    token = ""
-    for line in result.stdout.split("\n"):
-        if "Deployed to" in line:
-            token = line.split(":")[1].strip().split(" ")[0]
-            break
-
-    print(f"Custom ERC20 deployed to: {token}")
-
-    return token
-
-
-def startDb():
-    subprocess.run(
-        ["npm", "run", "database:reset"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.STDOUT,
-        cwd=root_path / "chess",
-    )
-
-    docker = subprocess.Popen(
-        ["docker", "compose", "up"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.STDOUT,
-        cwd=root_path / "chess" / "db" / "docker",
-    )
-
-    time.sleep(5)
-
-    print(f"Docker db started")
-
-
-def lastBlock():
-    r = subprocess.run(
-        # "cast block 'latest' --rpc-url http://localhost:8545 | rg 'timestamp' | awk -F' +' '{ print $2 }'",
-        "cast block 'latest' --rpc-url http://localhost:8545",
-        shell=True,
-        capture_output=True,
-        universal_newlines=True,
-    )
-
-    return r.stdout
-
-
 def main():
-    global ANVIL
+    # anvil = startAnvil(timestamp(1))
 
-    ANVIL = startAnvil()
+    baseTimestamp = timestampForEvent(2) - 100
 
-    setNextTimestamp(timestamp(2))
+    setNextTimestamp(baseTimestamp + 1)
 
     # block 1
     paima_l2 = deployPaimaContract()
 
     print(f"Paima L2 Contract deployed to: {paima_l2}")
 
-    setNextTimestamp(timestamp(3))
+    setNextTimestamp(baseTimestamp + 2)
 
     # block 2
     token = deployMyErc20()
@@ -246,29 +60,28 @@ def main():
     # Start the main chain process
 
     # block 3
-    mineEmptyBlock(timestamp(4))
-
-    print(f"{token}")
+    mineEmptyBlock(timestampForEvent(2) + 1)
 
     # block 4
-    mineBlockWithErcTransfer(timestamp(61), token)
 
-    lastBlock()
+    mineEmptyBlock(timestampForEvent(2) + 2)
+    # mineEmptyBlock(timestamp(61))
 
     # block 5
-    mineBlockWithErcTransfer(timestamp(674), token)
+    mineEmptyBlock(timestampForEvent(4))
+    # mineEmptyBlock(timestamp(674))
 
     # block 6
-    mineBlockWithErcTransfer(timestamp(821), token)
+    mineEmptyBlock(timestampForEvent(5))
 
     # block 7
-    mineBlockWithErcTransfer(timestamp(825), token)
+    mineEmptyBlock(timestampForEvent(5) + 1)
 
     # End of main chain
 
     NETWORK = "localhost"
 
-    startDb()
+    # startDb()
 
     print("Starting Paima Engine")
 
@@ -312,26 +125,16 @@ def main():
     print("")
 
 
-server = None
-
-try:
-    server = run_server(3000)
-    main()
-
-finally:
-    subprocess.run(
-        ["docker", "compose", "down"],
-        cwd=root_path / "chess" / "db" / "docker",
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.STDOUT,
+def server():
+    return carp_mock(
+        3000,
+        output,
+        "/transaction/history",
+        lambda x: x["block"]["slot"],
+        lambda x: x["transaction"]["hash"],
+        lambda x: {"transactions": x},
     )
 
-    if ANVIL is not None:
-        ANVIL.send_signal(subprocess.signal.SIGTERM)
-        ANVIL.wait()
 
-    if server is not None:
-        server.shutdown()
-        server.server_close()
-
-    time.sleep(2)
+with server(), Anvil(0), PaimaDb():
+    main()
