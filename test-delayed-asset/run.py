@@ -22,14 +22,14 @@ root_path = script_path.parent.parent
 
 
 def timestampForEvent(index):
-    ts = output[index]["slot"] + 1666656000 + 200
+    ts = output[index]["payload"][0]["slot"] + 1666656000 + 200
 
     return ts
 
 
 
 def main():
-    baseTimestamp = timestampForEvent(2) - 100
+    baseTimestamp = timestampForEvent(1) - 100
 
     setNextTimestamp(baseTimestamp + 1)
 
@@ -51,22 +51,21 @@ def main():
 
     # Start the main chain process
 
-    print(f"block 3 timestamp: {timestampForEvent(2) + 1}")
     # block 3
-    mineEmptyBlock(timestampForEvent(2) + 1)
+    mineEmptyBlock(timestampForEvent(1) + 1)
 
     # block 4
 
     mineEmptyBlock(timestampForEvent(2) + 2)
 
     # block 5
-    mineEmptyBlock(timestampForEvent(4))
+    mineEmptyBlock(timestampForEvent(2) + 3)
 
     # block 6
-    mineEmptyBlock(timestampForEvent(4) + 1)
+    mineEmptyBlock(timestampForEvent(2) + 4)
 
     # block 7
-    mineEmptyBlock(timestampForEvent(4) + 2)
+    mineEmptyBlock(timestampForEvent(2) + 5)
 
     NETWORK = "localhost"
 
