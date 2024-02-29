@@ -1,0 +1,8 @@
+extensions:
+  - name: "delayed-asset1"
+    type: cardano-delayed-asset
+    policyIds:
+      - "919d4c2c9455016289341b1a14dedf697687af31751170d56a31466e"
+    startSlot: 4222035
+    stopSlot: 4222468
+    network: Cardano
