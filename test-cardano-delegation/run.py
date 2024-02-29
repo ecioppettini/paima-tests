@@ -22,7 +22,7 @@ root_path = script_path.parent.parent
 
 
 def timestampForEvent(index):
-    ts = output[index]["slot"] + 1666656000 + 200
+    ts = output[index]["payload"][0]["slot"] + 1666656000 + 200
 
     return ts
 
@@ -123,7 +123,7 @@ def server():
         3000,
         output,
         "/delegation/pool",
-        getSlot=lambda x: x["slot"],
+        getSlot=lambda x: x["payload"][0]["slot"],
         getTxHash=lambda x: x["txId"],
         mapResult=lambda x: x,
     )
