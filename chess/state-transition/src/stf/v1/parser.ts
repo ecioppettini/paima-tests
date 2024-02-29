@@ -10,6 +10,7 @@ import type {
   UserStats,
   ZombieRound,
   CardanoTransfer,
+  CardanoStakeDelegation,
 } from './types';
 import { ENV } from '@paima/sdk/utils';
 
@@ -22,6 +23,7 @@ zombieScheduledData = z|*lobbyID
 userScheduledData   = u|*user|result|ratingChange
 scheduledBotMove   = sb|*lobbyID|roundNumber
 cardanoTransfer  = ct|txId|metadata|inputCredentials|outputs
+cardanoDelegation  = cd|address|pool
 `;
 
 const createdLobby: ParserRecord<CreatedLobbyInput> = {
@@ -74,6 +76,10 @@ const cardanoTransfer: ParserRecord<CardanoTransfer> = {
     return JSON.parse(input);
   },
 };
+const cardanoDelegation: ParserRecord<CardanoStakeDelegation> = {
+  address: PaimaParser.NCharsParser(0, 100),
+  pool: PaimaParser.OptionalParser(null, PaimaParser.NCharsParser(0, 100)),
+};
 
 const parserCommands: Record<string, ParserRecord<ParsedSubmittedInput>> = {
   createdLobby,
@@ -84,6 +90,7 @@ const parserCommands: Record<string, ParserRecord<ParsedSubmittedInput>> = {
   userScheduledData,
   scheduledBotMove,
   cardanoTransfer,
+  cardanoDelegation,
 };
 
 const myParser = new PaimaParser(myGrammar, parserCommands);

@@ -70,6 +70,11 @@ export interface CardanoTransfer {
   outputs: { asset: { policyId: string; assetName: string }; amount: string; address: string }[];
 }
 
+export interface CardanoStakeDelegation {
+  address: string;
+  pool: string | null;
+}
+
 export function isZombieRound(input: ScheduledDataInput): input is ZombieRound {
   return (input as ZombieRound).effect === 'zombie';
 }

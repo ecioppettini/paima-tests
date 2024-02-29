@@ -1,0 +1,9 @@
+extensions:
+  - name: "CARDANO-DELEGATION"
+    type: cardano-stake-delegation
+    network: Cardano
+    pools:
+      - "cb8ccb08136245d4d4ef2aa755ab036b3335dcd75ec2c234d384e515"
+    startSlot: 698213
+    stopSlot: 1174464
+    scheduledPrefix: cd
