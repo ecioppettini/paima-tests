@@ -1,0 +1,7 @@
+extensions:
+  - name: "projected-nft"
+    type: cardano-projected-nft
+    startSlot: 100
+    stopSlot: 200
+    scheduledPrefix: pnft
+    network: Cardano

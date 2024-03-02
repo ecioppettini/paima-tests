@@ -75,6 +75,17 @@ export interface CardanoStakeDelegation {
   pool: string | null;
 }
 
+export interface CardanoProjectedNft {
+  ownerAddress: string;
+  previousTxHash: string;
+  previousOutputIndex: string;
+  currentTxHash: string;
+  currentOutputIndex: string;
+  policyId: string;
+  assetName: string;
+  status: string;
+}
+
 export function isZombieRound(input: ScheduledDataInput): input is ZombieRound {
   return (input as ZombieRound).effect === 'zombie';
 }

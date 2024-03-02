@@ -11,6 +11,7 @@ import type {
   ZombieRound,
   CardanoTransfer,
   CardanoStakeDelegation,
+  CardanoProjectedNft,
 } from './types';
 import { ENV } from '@paima/sdk/utils';
 
@@ -24,6 +25,7 @@ userScheduledData   = u|*user|result|ratingChange
 scheduledBotMove   = sb|*lobbyID|roundNumber
 cardanoTransfer  = ct|txId|metadata|inputCredentials|outputs
 cardanoDelegation  = cd|address|pool
+projectedNft = pnft|ownerAddress|previousTxHash|previousOutputIndex|currentTxHash|currentOutputIndex|policyId|assetName|status
 `;
 
 const createdLobby: ParserRecord<CreatedLobbyInput> = {
@@ -81,6 +83,17 @@ const cardanoDelegation: ParserRecord<CardanoStakeDelegation> = {
   pool: PaimaParser.OptionalParser(null, PaimaParser.NCharsParser(0, 100)),
 };
 
+const projectedNft: ParserRecord<CardanoProjectedNft> = {
+  ownerAddress: PaimaParser.NCharsParser(0, 1000),
+  previousTxHash: PaimaParser.NCharsParser(0, 1000),
+  previousOutputIndex: PaimaParser.NCharsParser(0, 1000),
+  currentTxHash: PaimaParser.NCharsParser(0, 1000),
+  currentOutputIndex: PaimaParser.NCharsParser(0, 1000),
+  policyId: PaimaParser.NCharsParser(0, 1000),
+  assetName: PaimaParser.NCharsParser(0, 1000),
+  status: PaimaParser.NCharsParser(0, 1000),
+};
+
 const parserCommands: Record<string, ParserRecord<ParsedSubmittedInput>> = {
   createdLobby,
   joinedLobby,
@@ -91,6 +104,7 @@ const parserCommands: Record<string, ParserRecord<ParsedSubmittedInput>> = {
   scheduledBotMove,
   cardanoTransfer,
   cardanoDelegation,
+  projectedNft,
 };
 
 const myParser = new PaimaParser(myGrammar, parserCommands);
