@@ -67,7 +67,11 @@ export interface CardanoTransfer {
   txId: string;
   metadata: string | null;
   inputCredentials: string[];
-  outputs: { asset: { policyId: string; assetName: string }; amount: string; address: string }[];
+  outputs: {
+    asset: { policyId: string; assetName: string } | null;
+    amount: string;
+    address: string;
+  }[];
 }
 
 export interface CardanoStakeDelegation {
@@ -84,6 +88,12 @@ export interface CardanoProjectedNft {
   policyId: string;
   assetName: string;
   status: string;
+}
+
+export interface CardanoMint {
+  txId: string;
+  metadata: string | null;
+  assets: { asset: { policyId: string; assetName: string }; amount: string };
 }
 
 export function isZombieRound(input: ScheduledDataInput): input is ZombieRound {

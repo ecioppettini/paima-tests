@@ -1,0 +1,15 @@
+Anvil1:
+  type: evm-main
+  chainUri: 'http://localhost:8545'
+  chainId: 31337
+  chainCurrencyName: 'ETH'
+  chainCurrencySymbol: 'ETH'
+  chainCurrencyDecimals: 18
+  paimaL2ContractAddress: '0x5FbDB2315678afecb367f032d93F642f64180aa3'
+
+Cardano:
+  type: cardano
+  carpUrl: http://localhost:3000
+  network: preview
+  confirmationDepth: 10
+  paginationLimit: 2

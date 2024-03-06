@@ -12,6 +12,7 @@ import type {
   CardanoTransfer,
   CardanoStakeDelegation,
   CardanoProjectedNft,
+  CardanoMint,
 } from './types';
 import { ENV } from '@paima/sdk/utils';
 
@@ -26,6 +27,7 @@ scheduledBotMove   = sb|*lobbyID|roundNumber
 cardanoTransfer  = ct|txId|metadata|inputCredentials|outputs
 cardanoDelegation  = cd|address|pool
 projectedNft = pnft|ownerAddress|previousTxHash|previousOutputIndex|currentTxHash|currentOutputIndex|policyId|assetName|status
+cardanoMint = cmb|txId|metadata|assets
 `;
 
 const createdLobby: ParserRecord<CreatedLobbyInput> = {
@@ -82,7 +84,6 @@ const cardanoDelegation: ParserRecord<CardanoStakeDelegation> = {
   address: PaimaParser.NCharsParser(0, 100),
   pool: PaimaParser.OptionalParser(null, PaimaParser.NCharsParser(0, 100)),
 };
-
 const projectedNft: ParserRecord<CardanoProjectedNft> = {
   ownerAddress: PaimaParser.NCharsParser(0, 1000),
   previousTxHash: PaimaParser.NCharsParser(0, 1000),
@@ -92,6 +93,13 @@ const projectedNft: ParserRecord<CardanoProjectedNft> = {
   policyId: PaimaParser.NCharsParser(0, 1000),
   assetName: PaimaParser.NCharsParser(0, 1000),
   status: PaimaParser.NCharsParser(0, 1000),
+};
+const cardanoMint: ParserRecord<CardanoMint> = {
+  txId: PaimaParser.NCharsParser(0, 64),
+  metadata: PaimaParser.OptionalParser(null, PaimaParser.RegexParser(/[a-f0-9]*/)),
+  assets: (keyName: string, input: string) => {
+    return JSON.parse(input);
+  },
 };
 
 const parserCommands: Record<string, ParserRecord<ParsedSubmittedInput>> = {
@@ -105,6 +113,7 @@ const parserCommands: Record<string, ParserRecord<ParsedSubmittedInput>> = {
   cardanoTransfer,
   cardanoDelegation,
   projectedNft,
+  cardanoMint,
 };
 
 const myParser = new PaimaParser(myGrammar, parserCommands);
