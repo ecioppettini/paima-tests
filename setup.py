@@ -185,6 +185,79 @@ def deployMyErc20():
 
     return token
 
+def deployMyErc721():
+    result = subprocess.run(
+        [
+            "forge",
+            "create",
+            "--root",
+            ".",
+            "--rpc-url",
+            "http://localhost:8545",
+            "--private-key",
+            "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+            "src/CustomErc721.sol:CustomErc721",
+        ],
+        stdout=subprocess.PIPE,
+        universal_newlines=True,
+        cwd=root_path / "my-erc721",
+    )
+
+    token = ""
+    for line in result.stdout.split("\n"):
+        if "Deployed to" in line:
+            token = line.split(":")[1].strip().split(" ")[0]
+            break
+
+    print(f"Custom ERC721 deployed to: {token}")
+
+    return token
+
+
+def transferErc721(contractAddress, fro, to, tokenId):
+    result = subprocess.run(
+        [
+            "cast",
+            "send",
+            str(contractAddress),
+            "--unlocked",
+            "--from",
+            USER,
+            "--rpc-url",
+            "http://localhost:8545",
+            "transferFrom(address, address, uint256)",
+            fro,
+            to,
+            str(tokenId)
+        ],
+        cwd=root_path,
+        stdout=subprocess.PIPE,
+        universal_newlines=True,
+    )
+
+    result.check_returncode()
+
+def burnErc721(contractAddress, tokenId):
+    result = subprocess.run(
+        [
+            "cast",
+            "send",
+            str(contractAddress),
+            "--unlocked",
+            "--from",
+            USER,
+            "--rpc-url",
+            "http://localhost:8545",
+            "burn(uint256)",
+            str(tokenId)
+        ],
+        cwd=root_path,
+        stdout=subprocess.PIPE,
+        universal_newlines=True,
+    )
+
+    result.check_returncode()
+
 class PaimaDb:
     def __enter__(self):
         subprocess.run(
