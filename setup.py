@@ -116,7 +116,17 @@ def deployPaimaContract():
         [
             "forge",
             "install",
-            "openzeppelin/openzeppelin-contracts@v4.9.5",
+            "openzeppelin/openzeppelin-contracts@v5.0.2",
+            "--no-commit",
+        ],
+        cwd=root_path,
+    )
+
+    subprocess.run(
+        [
+            "forge",
+            "install",
+            "openzeppelin/openzeppelin-contracts-upgradeable@v5.0.2",
             "--no-commit",
         ],
         cwd=root_path,
@@ -142,6 +152,8 @@ def deployPaimaContract():
             "../../lib",
             "--remappings",
             "@openzeppelin/contracts/=../../lib/openzeppelin-contracts/contracts",
+            "--remappings",
+            "@openzeppelin/contracts-upgradeable/=../../lib/openzeppelin-contracts-upgradeable/contracts",
         ],
         stdout=subprocess.PIPE,
         cwd=root_path / "contracts" / "evm-contracts",
