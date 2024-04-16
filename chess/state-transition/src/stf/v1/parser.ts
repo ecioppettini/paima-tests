@@ -1,5 +1,5 @@
-import type { ParserRecord } from '@paima/sdk/concise';
-import { PaimaParser } from '@paima/sdk/concise';
+import type { ParserRecord } from "@paima/sdk/concise";
+import { PaimaParser } from "@paima/sdk/concise";
 import type {
   BotMove,
   ClosedLobbyInput,
@@ -13,8 +13,11 @@ import type {
   CardanoStakeDelegation,
   CardanoProjectedNft,
   CardanoMint,
-} from './types';
-import { ENV } from '@paima/sdk/utils';
+  MinaGenericEvent,
+  MinaGenericAction,
+  Erc721Burn,
+} from "./types";
+import { ENV } from "@paima/sdk/utils";
 
 const myGrammar = `
 createdLobby        = c|numOfRounds|roundLength|playTimePerPlayer|isHidden?|isPractice?|botDifficulty|playerOneIsWhite?
@@ -28,6 +31,9 @@ cardanoTransfer  = ct|txId|metadata|inputCredentials|outputs
 cardanoDelegation  = cd|address|pool
 projectedNft = pnft|ownerAddress|previousTxHash|previousOutputIndex|currentTxHash|currentOutputIndex|policyId|assetName|status
 cardanoMint = cmb|txId|metadata|assets
+minaGenericEvent = mge|data
+minaGenericAction = mga|data
+erc721Burn = erc721|owner|tokenId
 `;
 
 const createdLobby: ParserRecord<CreatedLobbyInput> = {
@@ -53,26 +59,29 @@ const submittedMoves: ParserRecord<SubmittedMovesInput> = {
   pgnMove: PaimaParser.NCharsParser(2, 255),
 };
 const zombieScheduledData: ParserRecord<ZombieRound> = {
-  renameCommand: 'scheduledData',
-  effect: 'zombie',
+  renameCommand: "scheduledData",
+  effect: "zombie",
   lobbyID: PaimaParser.NCharsParser(12, 12),
 };
 const userScheduledData: ParserRecord<UserStats> = {
-  renameCommand: 'scheduledData',
-  effect: 'stats',
+  renameCommand: "scheduledData",
+  effect: "stats",
   user: PaimaParser.WalletAddress(),
   result: PaimaParser.RegexParser(/^[w|t|l]$/),
   ratingChange: PaimaParser.NumberParser(),
 };
 const scheduledBotMove: ParserRecord<BotMove> = {
-  renameCommand: 'scheduledData',
-  effect: 'move',
+  renameCommand: "scheduledData",
+  effect: "move",
   lobbyID: PaimaParser.NCharsParser(12, 12),
   roundNumber: PaimaParser.NumberParser(1, 10000),
 };
 const cardanoTransfer: ParserRecord<CardanoTransfer> = {
   txId: PaimaParser.NCharsParser(0, 64),
-  metadata: PaimaParser.OptionalParser(null, PaimaParser.RegexParser(/[a-f0-9]*/)),
+  metadata: PaimaParser.OptionalParser(
+    null,
+    PaimaParser.RegexParser(/[a-f0-9]*/),
+  ),
   inputCredentials: PaimaParser.ArrayParser({
     item: PaimaParser.RegexParser(/[a-f0-9]*/),
   }),
@@ -96,10 +105,30 @@ const projectedNft: ParserRecord<CardanoProjectedNft> = {
 };
 const cardanoMint: ParserRecord<CardanoMint> = {
   txId: PaimaParser.NCharsParser(0, 64),
-  metadata: PaimaParser.OptionalParser(null, PaimaParser.RegexParser(/[a-f0-9]*/)),
+  metadata: PaimaParser.OptionalParser(
+    null,
+    PaimaParser.RegexParser(/[a-f0-9]*/),
+  ),
   assets: (keyName: string, input: string) => {
     return JSON.parse(input);
   },
+};
+
+const minaGenericEvent: ParserRecord<MinaGenericEvent> = {
+  data: (keyName: string, input: string) => {
+    return JSON.parse(input);
+  },
+};
+
+const minaGenericAction: ParserRecord<MinaGenericAction> = {
+  data: (keyName: string, input: string) => {
+    return JSON.parse(input);
+  },
+};
+
+const erc721Burn: ParserRecord<Erc721Burn> = {
+  owner: PaimaParser.NCharsParser(0, 100),
+  tokenId: PaimaParser.NCharsParser(0, 100),
 };
 
 const parserCommands: Record<string, ParserRecord<ParsedSubmittedInput>> = {
@@ -114,6 +143,9 @@ const parserCommands: Record<string, ParserRecord<ParsedSubmittedInput>> = {
   cardanoDelegation,
   projectedNft,
   cardanoMint,
+  minaGenericEvent,
+  minaGenericAction,
+  erc721Burn,
 };
 
 const myParser = new PaimaParser(myGrammar, parserCommands);
@@ -123,8 +155,8 @@ function parse(s: string): ParsedSubmittedInput {
     const parsed = myParser.start(s);
     return { input: parsed.command, ...parsed.args } as any;
   } catch (e) {
-    console.log(e, 'Parsing error');
-    return { input: 'invalidString' };
+    console.log(e, "Parsing error");
+    return { input: "invalidString" };
   }
 }
 
