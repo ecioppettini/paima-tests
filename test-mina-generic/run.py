@@ -8,7 +8,9 @@ import shutil
 import sys
 import requests
 import math
+import json
 from pathlib import Path
+from functools import reduce
 
 directory = Path(__file__).resolve()
 sys.path.append(str(directory.parent.parent))
@@ -16,6 +18,13 @@ sys.path.append(str(directory.parent.parent))
 script_path = Path(__file__).resolve()
 root_path = script_path.parent.parent
 from setup import *
+
+# Set environment variables for PostgreSQL
+os.environ["PGDATABASE"] = "postgres"
+os.environ["PGUSER"] = "postgres"
+os.environ["PGPASSWORD"] = "postgres"
+os.environ["PGHOST"] = "localhost"
+os.environ["PGPORT"] = "5440"
 
 
 def setupLightnet():
@@ -30,13 +39,7 @@ def setupLightnet():
     # )
 
     status = subprocess.run(
-        [
-            "zk",
-            "lightnet",
-            "start",
-            "--sync",
-            "false"
-        ],
+        ["zk", "lightnet", "start", "--sync", "false"],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.STDOUT,
     )
@@ -77,7 +80,7 @@ def setupApp():
         stdout=subprocess.DEVNULL,
         stderr=subprocess.STDOUT,
         universal_newlines=True,
-        cwd="zkapp"
+        cwd="zkapp",
     )
 
     if status.returncode != 0:
@@ -87,8 +90,9 @@ def setupApp():
 
 
 def getEvents(status):
-    url = 'http://localhost:8282'
-    data = {'query': """{{
+    url = "http://localhost:8282"
+    data = {
+        "query": """{{
         events(
             input: {{
                 address:"B62qoP3xe9zZJmBDacZPL8roBivpVKhAiDNtpAM9RCAW579JnJo1ZL2",
@@ -104,11 +108,43 @@ def getEvents(status):
                     data
                 }}
             }}
-        }}""".format(status=status)}
+        }}""".format(
+            status=status
+        )
+    }
 
     response = requests.post(url, data=data)
 
-    return response.json()['data']['events']
+    return response.json()["data"]["events"]
+
+
+def getActions(status):
+    url = "http://localhost:8282"
+    data = {
+        "query": """{{
+        actions(
+            input: {{
+                address:"B62qoP3xe9zZJmBDacZPL8roBivpVKhAiDNtpAM9RCAW579JnJo1ZL2",
+                status: {status}
+            }}
+        )
+            {{
+                blockInfo  {{
+                    stateHash
+                    timestamp
+                }}
+                actionData {{
+                    data
+                }}
+            }}
+        }}""".format(
+            status=status
+        )
+    }
+
+    response = requests.post(url, data=data)
+
+    return response.json()["data"]["actions"]
 
 
 def main():
@@ -134,7 +170,7 @@ def main():
 
     print(tss)
     print(len(tss))
-    
+
     baseTimestamp = tss[0]
 
     setNextTimestamp(baseTimestamp + 1)
@@ -143,7 +179,6 @@ def main():
     paima_l2 = deployPaimaContract()
 
     # raise RuntimeError("please exit")
-    
 
     print(f"Paima L2 Contract deployed to: {paima_l2}")
 
@@ -191,37 +226,93 @@ def main():
 
     # subprocess.run([root_path / "paima-engine-linux", "run"])
 
-    paima_process = subprocess.Popen(
-        [root_path / "paima-engine-linux", "run"],
-        stdout=open(tmpfile, "w"),
-        stderr=subprocess.STDOUT,
-    )
+    for i in range(2):
+        paima_process = subprocess.Popen(
+            [root_path / "paima-engine-linux", "run"],
+            stdout=open(tmpfile, "w"),
+            stderr=subprocess.STDOUT,
+        )
 
-    time.sleep(5)
+        time.sleep(5)
 
-    paima_process.send_signal(subprocess.signal.SIGKILL)
-    paima_process.wait()
+        paima_process.send_signal(subprocess.signal.SIGKILL)
+        paima_process.wait()
 
-    print("Logs")
+        print("Logs")
 
-    with open(tmpfile, "r") as file:
-        print(file.read())
+        with open(tmpfile, "r") as file:
+            print(file.read())
 
-    # Set environment variables for PostgreSQL
-    os.environ["PGDATABASE"] = "postgres"
-    os.environ["PGUSER"] = "postgres"
-    os.environ["PGPASSWORD"] = "postgres"
-    os.environ["PGHOST"] = "localhost"
-    os.environ["PGPORT"] = "5440"
+        subprocess.run(
+            "psql -c 'SELECT * FROM cde_generic_data WHERE cde_id = 0 ORDER BY block_height;'",
+            shell=True,
+        )
 
-    subprocess.run(
-        "psql -c 'SELECT * FROM cde_generic_data ORDER BY block_height;'", shell=True
-    )
+        subprocess.run(
+            "psql -c 'SELECT * FROM cde_generic_data WHERE cde_id = 1 ORDER BY block_height ;'",
+            shell=True,
+        )
 
-    print("")
-    print("                            \033[1;32mSuccess\033[0m")
-    print("")
+        e = subprocess.run(
+            [
+                "psql",
+                "-t",
+                "-c",
+                "SELECT event_data FROM cde_generic_data WHERE cde_id = 0 ORDER BY block_height;",
+            ],
+            capture_output=True,
+            universal_newlines=True,
+        )
 
+        a = subprocess.run(
+            [
+                "psql",
+                "-t",
+                "-c",
+                "SELECT event_data FROM cde_generic_data WHERE cde_id = 1 ORDER BY block_height;",
+            ],
+            capture_output=True,
+            universal_newlines=True,
+        )
+
+        eventsFromDb = [
+            sorted(json.loads(r.strip())["data"]) for r in e.stdout.split("\n")[0:-2]
+        ]
+        actionsFromDb = [
+            sorted(json.loads(r.strip())["data"]) for r in a.stdout.split("\n")[0:-2]
+        ]
+
+        events = list(
+            map(
+                lambda x: sorted(list(map(lambda y: y["data"], x["eventData"]))),
+                getEvents("ALL"),
+            )
+        )
+
+        actions = list(
+            map(
+                lambda x: sorted(list(map(lambda y: y["data"], x["actionData"]))),
+                getActions("ALL"),
+            )
+        )
+
+        if events != eventsFromDb:
+            raise RuntimeError("events assertion failed")
+
+        if actions != actionsFromDb:
+            raise RuntimeError("events assertion failed")
+
+        # print(eventsFromDb)
+        # print(events)
+
+        # print("-------------------------------------------")
+
+        # print(actions)
+        # print(actionsFromDb)
+
+        print("")
+        print("                            \033[1;32mSuccess\033[0m")
+        print("")
 
 
 with Anvil(0), PaimaDb():
