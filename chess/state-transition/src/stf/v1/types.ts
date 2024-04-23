@@ -96,6 +96,19 @@ export interface CardanoMint {
   assets: { asset: { policyId: string; assetName: string }; amount: string };
 }
 
+export interface MinaGenericEvent {
+  data: any;
+}
+
+export interface MinaGenericAction {
+  data: any;
+}
+
+export interface Erc721Burn {
+  owner: string;
+  tokenId: string;
+}
+
 export function isZombieRound(input: ScheduledDataInput): input is ZombieRound {
   return (input as ZombieRound).effect === 'zombie';
 }
