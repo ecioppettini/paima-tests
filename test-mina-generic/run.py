@@ -55,7 +55,6 @@ def setupLightnet():
                 "status",
             ],
             stdout=subprocess.PIPE,
-            cwd=root_path / "contracts" / "evm-contracts",
             universal_newlines=True,
         )
 
@@ -87,6 +86,22 @@ def setupApp():
         print(status.stdout)
         print(status.stderr)
         raise RuntimeError("failed to setup zkapp")
+
+def isLightnetRunning():
+    status = subprocess.run(
+        [
+            "zk",
+            "lightnet",
+            "status",
+        ],
+        stdout=subprocess.PIPE,
+        universal_newlines=True,
+    )
+
+    print(status.returncode)
+
+    return status.returncode == 0
+
 
 
 def getEvents(status):
@@ -148,12 +163,24 @@ def getActions(status):
 
 
 def main():
-    # setupLightnet()
+    shutil.copytree(root_path / "packaged", "packaged", dirs_exist_ok=True)
 
-    # setupApp()
+    if not isLightnetRunning():
+        setupLightnet()
+        setupApp()
+
+        while True:
+            events = getEvents("CANONICAL")
+
+            if len(events) == 4:
+                break
+
+            time.sleep(10)
 
     events = getEvents("CANONICAL")
     allEvents = getEvents("ALL")
+
+    print(len(events))
 
     if len(events) != len(allEvents):
         print(len(events), len(allEvents))
@@ -192,15 +219,14 @@ def main():
     # Start the main chain process
 
     # block 3
-    mineEmptyBlock(tss[1] + 1)
+    mineEmptyBlock(tss[1] + 2)
 
     # block 4
-
-    mineEmptyBlock(tss[1] + 2)
+    mineEmptyBlock(tss[1] + 3)
     # mineEmptyBlock(timestamp(61))
 
     # block 5
-    mineEmptyBlock(tss[1] + 3)
+    mineEmptyBlock(tss[1] + 4)
     # mineEmptyBlock(timestamp(674))
 
     # block 6
@@ -209,6 +235,8 @@ def main():
     # block 7
     mineEmptyBlock(tss[2] + 2)
 
+    runEngine()
+
     # block 7
     mineEmptyBlock(tss[3] + 1)
 
@@ -216,42 +244,10 @@ def main():
 
     NETWORK = "localhost"
 
-    print("Starting Paima Engine")
-
-    tmpfile = tempfile.mktemp()
-
-    os.environ["NETWORK"] = "localhost"
-
-    shutil.copytree(root_path / "packaged", "packaged", dirs_exist_ok=True)
-
     # subprocess.run([root_path / "paima-engine-linux", "run"])
 
     for i in range(2):
-        paima_process = subprocess.Popen(
-            [root_path / "paima-engine-linux", "run"],
-            stdout=open(tmpfile, "w"),
-            stderr=subprocess.STDOUT,
-        )
-
-        time.sleep(5)
-
-        paima_process.send_signal(subprocess.signal.SIGKILL)
-        paima_process.wait()
-
-        print("Logs")
-
-        with open(tmpfile, "r") as file:
-            print(file.read())
-
-        subprocess.run(
-            "psql -c 'SELECT * FROM cde_generic_data WHERE cde_id = 0 ORDER BY block_height;'",
-            shell=True,
-        )
-
-        subprocess.run(
-            "psql -c 'SELECT * FROM cde_generic_data WHERE cde_id = 1 ORDER BY block_height ;'",
-            shell=True,
-        )
+        runEngine()
 
         e = subprocess.run(
             [
@@ -300,7 +296,7 @@ def main():
             raise RuntimeError("events assertion failed")
 
         if actions != actionsFromDb:
-            raise RuntimeError("events assertion failed")
+            raise RuntimeError("actions assertion failed")
 
         # print(eventsFromDb)
         # print(events)
@@ -313,6 +309,64 @@ def main():
         print("")
         print("                            \033[1;32mSuccess\033[0m")
         print("")
+
+
+def runEngine():
+    print("Starting Paima Engine")
+
+    os.environ["NETWORK"] = "localhost"
+
+    tmpfile = tempfile.mktemp()
+
+    paima_process = subprocess.Popen(
+        [root_path / "paima-engine-linux", "run"],
+        stdout=open(tmpfile, "w"),
+        stderr=subprocess.STDOUT,
+    )
+
+    time.sleep(5)
+
+    paima_process.send_signal(subprocess.signal.SIGKILL)
+    paima_process.wait()
+
+    print("Logs")
+
+    with open(tmpfile, "r") as file:
+        print(file.read())
+
+    print("events")
+
+    subprocess.run(
+        "psql -c 'SELECT * FROM cde_generic_data WHERE cde_id = 0 ORDER BY block_height;'",
+        shell=True,
+    )
+
+    print("-" * 80)
+    print("actions")
+    print("-" * 80)
+
+    subprocess.run(
+        "psql -c 'SELECT * FROM cde_generic_data WHERE cde_id = 1 ORDER BY block_height;'",
+        shell=True,
+    )
+
+    print("-" * 80)
+    print("cursors")
+    print("-" * 80)
+
+    subprocess.run(
+        "psql -c 'SELECT * FROM cde_tracking_cursor_pagination;'",
+        shell=True,
+    )
+
+    print("-" * 80)
+    print("checkpoints")
+    print("-" * 80)
+
+    subprocess.run(
+        "psql -c 'SELECT * FROM mina_checkpoint;'",
+        shell=True,
+    )
 
 
 with Anvil(0), PaimaDb():
