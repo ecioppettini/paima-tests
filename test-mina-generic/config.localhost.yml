@@ -12,3 +12,4 @@ Mina:
   type: mina
   archiveConnectionString: "postgresql://postgres:postgres@localhost:5432/archive"
   paginationLimit: 1
+  delay: 600

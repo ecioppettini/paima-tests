@@ -173,20 +173,21 @@ def main():
             events = getEvents("CANONICAL")
 
             if len(events) == 4:
+                time.sleep(25)
                 break
 
-            time.sleep(10)
+            time.sleep(20)
 
     events = getEvents("CANONICAL")
     allEvents = getEvents("ALL")
 
-    print(len(events))
+    # print(len(events))
 
     if len(events) != len(allEvents):
         print(len(events), len(allEvents))
         raise RuntimeError("not all events are canonical yet")
 
-    print(events)
+    # print(events)
 
     # print(events)
 
@@ -306,9 +307,9 @@ def main():
         # print(actions)
         # print(actionsFromDb)
 
-        print("")
-        print("                            \033[1;32mSuccess\033[0m")
-        print("")
+    print("")
+    print("                            \033[1;32mSuccess\033[0m")
+    print("")
 
 
 def runEngine():
