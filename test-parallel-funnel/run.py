@@ -75,14 +75,14 @@ def main():
 
     # block 4 (merged to 5)
     setNextTimestamp(baseTimestamp + 4 + 1, port=8546)
-    transferErc20(token, TARGET, 5, port=8546)
+    transferErc20(token, TARGET, 3, port=8546)
 
     # block 5 (merged to 6)
     mineEmptyBlock(baseTimestamp + 5 + 1, port=8546)
 
     # block 6 (merged to 7)
     setNextTimestamp(baseTimestamp + 6 + 1 + 1, port=8546)
-    transferErc20(token, TARGET2, 7, port=8546)
+    transferErc20(token, TARGET2, 100, port=8546)
 
     # block 7
     mineEmptyBlock(baseTimestamp + 7 + 1 + 1, port=8546)

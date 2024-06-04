@@ -16,6 +16,12 @@ from setup import *
 script_path = Path(__file__).resolve()
 root_path = script_path.parent.parent
 
+os.environ["PGDATABASE"] = "postgres"
+os.environ["PGUSER"] = "postgres"
+os.environ["PGPASSWORD"] = "postgres"
+os.environ["PGHOST"] = "localhost"
+os.environ["PGPORT"] = "5440"
+
 def main():
     baseTimestamp = 1
 
@@ -95,12 +101,6 @@ def main():
     with open(tmpfile, "r") as file:
         print(file.read())
 
-    # Set environment variables for PostgreSQL
-    os.environ["PGDATABASE"] = "postgres"
-    os.environ["PGUSER"] = "postgres"
-    os.environ["PGPASSWORD"] = "postgres"
-    os.environ["PGHOST"] = "localhost"
-    os.environ["PGPORT"] = "5432"
 
     subprocess.run(
         "psql -c 'SELECT * FROM cde_erc721_data;'", shell=True

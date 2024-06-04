@@ -19,7 +19,6 @@ script_path = Path(__file__).resolve()
 root_path = script_path.parent.parent
 from setup import *
 
-# Set environment variables for PostgreSQL
 os.environ["PGDATABASE"] = "postgres"
 os.environ["PGUSER"] = "postgres"
 os.environ["PGPASSWORD"] = "postgres"
@@ -87,6 +86,7 @@ def setupApp():
         print(status.stderr)
         raise RuntimeError("failed to setup zkapp")
 
+
 def isLightnetRunning():
     status = subprocess.run(
         [
@@ -101,7 +101,6 @@ def isLightnetRunning():
     print(status.returncode)
 
     return status.returncode == 0
-
 
 
 def getEvents(status):
@@ -255,7 +254,7 @@ def main():
                 "psql",
                 "-t",
                 "-c",
-                "SELECT event_data FROM cde_generic_data WHERE cde_id = 0 ORDER BY block_height;",
+                "SELECT event_data FROM cde_generic_data WHERE cde_name = 'mina generic event' ORDER BY block_height;",
             ],
             capture_output=True,
             universal_newlines=True,
@@ -266,7 +265,7 @@ def main():
                 "psql",
                 "-t",
                 "-c",
-                "SELECT event_data FROM cde_generic_data WHERE cde_id = 1 ORDER BY block_height;",
+                "SELECT event_data FROM cde_generic_data WHERE cde_name = 'mina generic action' ORDER BY block_height;",
             ],
             capture_output=True,
             universal_newlines=True,
@@ -292,6 +291,8 @@ def main():
                 getActions("ALL"),
             )
         )
+
+        print(events, eventsFromDb)
 
         if events != eventsFromDb:
             raise RuntimeError("events assertion failed")
@@ -338,8 +339,12 @@ def runEngine():
     print("events")
 
     subprocess.run(
-        "psql -c 'SELECT * FROM cde_generic_data WHERE cde_id = 0 ORDER BY block_height;'",
-        shell=True,
+        [
+            "psql",
+            "-c",
+            "SELECT * FROM cde_generic_data WHERE cde_name = 'mina generic event' ORDER BY block_height;",
+        ],
+        # shell=True,
     )
 
     print("-" * 80)
@@ -347,8 +352,12 @@ def runEngine():
     print("-" * 80)
 
     subprocess.run(
-        "psql -c 'SELECT * FROM cde_generic_data WHERE cde_id = 1 ORDER BY block_height;'",
-        shell=True,
+        [
+            "psql",
+            "-c",
+            "SELECT * FROM cde_generic_data WHERE cde_name = 'mina generic action' ORDER BY block_height;",
+        ],
+        # shell=True,
     )
 
     print("-" * 80)

@@ -114,7 +114,7 @@ def main():
     os.environ["PGUSER"] = "postgres"
     os.environ["PGPASSWORD"] = "postgres"
     os.environ["PGHOST"] = "localhost"
-    os.environ["PGPORT"] = "5432"
+    os.environ["PGPORT"] = "5440"
 
     subprocess.run(
         "psql -c 'SELECT cde_id,tx_id,assets FROM cde_cardano_mint_burn;'", shell=True

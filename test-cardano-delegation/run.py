@@ -41,7 +41,7 @@ def main():
     setNextTimestamp(baseTimestamp + 2)
 
     # block 2
-    token = deployMyErc20()
+    token = deployErc20()
 
     print(f"Deployed ERC20: {token}")
 
@@ -107,7 +107,7 @@ def main():
     os.environ["PGUSER"] = "postgres"
     os.environ["PGPASSWORD"] = "postgres"
     os.environ["PGHOST"] = "localhost"
-    os.environ["PGPORT"] = "5432"
+    os.environ["PGPORT"] = "5440"
 
     subprocess.run(
         "psql -c 'SELECT * FROM cde_cardano_pool_delegation;'", shell=True
