@@ -1,0 +1,26 @@
+{
+  "name": "db-client",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "main": "npx esrun index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "@types/pg": "^8.11.6"
+  },
+  "dependencies": {
+    "@paima/db": "*",
+    "@paima/utils": "*",
+    "@paima/utils-backend": "*",
+    "@pgtyped/runtime": "^2.3.0",
+    "esrun": "^3.2.26",
+    "pg": "^8.11.3",
+    "pg-tx": "^1.0.1",
+    "web3-utils": "^4.2.3"
+  }
+}

@@ -1,0 +1,15 @@
+extensions:
+  - name: "Dynamic generic"
+    type: "dynamic-evm-primitive"
+    contractAddress: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+    eventSignature: "MyEvent(address)"
+    abiPath: "../dynamic-contract/out/EventEmitter.sol/EventEmitter.json"
+    network: "Anvil1"
+    targetConfig: 
+      scheduledPrefix: "nft"
+      type: "generic"
+      abiPath: "../my-erc721/out/CustomErc721.sol/CustomErc721.json"
+      eventSignature: "Transfer(from, to, tokenId)"
+    startBlockHeight: 0
+    dynamicFields:
+      contractAddress: value
