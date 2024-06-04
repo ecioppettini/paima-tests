@@ -1,0 +1,14 @@
+extensions:
+  - name: "Dynamic erc721"
+    type: "dynamic-evm-primitive"
+    contractAddress: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+    eventSignature: "MyEvent(address)"
+    abiPath: "../dynamic-contract/out/EventEmitter.sol/EventEmitter.json"
+    network: "Anvil1"
+    targetConfig: 
+      scheduledPrefix: "nft"
+      burnScheduledPrefix: "burnNft"
+      type: "erc721"
+    startBlockHeight: 0
+    dynamicFields:
+      contractAddress: value
